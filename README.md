@@ -18,7 +18,13 @@ This tool helps benchmark Ollama model performance across different systems.
    source venv/bin/activate
    ```
 
-2. Run the benchmark:
+2. Install the requirements
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Run the benchmark:
 
    ```bash
    python benchmark.py --runs 10 --output results.json --model llama2
@@ -30,7 +36,7 @@ This tool helps benchmark Ollama model performance across different systems.
    - `--output`: Output file name for results
    - `--model`: Model to benchmark (default: llama2)
 
-3. To deactivate the virtual environment when done:
+4. To deactivate the virtual environment when done:
    ```bash
    deactivate
    ```

@@ -3,6 +3,22 @@ import json
 import statistics
 import requests
 import argparse
+from pathlib import Path
+import platform
+import psutil
+import sys
+
+def get_system_info():
+    """
+    Gather system information for benchmark context
+    """
+    return {
+        "platform": platform.platform(),
+        "processor": platform.processor(),
+        "python_version": sys.version,
+        "total_memory": f"{psutil.virtual_memory().total / (1024**3):.2f} GB",
+        "available_memory": f"{psutil.virtual_memory().available / (1024**3):.2f} GB"
+    }
 
 def run_benchmark(prompt, num_runs=5):
     """
@@ -19,7 +35,7 @@ def run_benchmark(prompt, num_runs=5):
         # Make request to Ollama API
         response = requests.post('http://localhost:11434/api/generate', 
             json={
-                "model": "llama2",  # Change this to your model
+                "model": "qwen2.5-coder:latest",  # Change this to your model
                 "prompt": prompt,
                 "stream": False
             }
@@ -55,6 +71,7 @@ def main():
     parser = argparse.ArgumentParser(description='Benchmark Ollama model performance')
     parser.add_argument('--runs', type=int, default=5, help='Number of test runs')
     parser.add_argument('--output', type=str, help='Output file for results')
+    parser.add_argument('--model', type=str, default='llama2', help='Model to benchmark')
     args = parser.parse_args()
 
     # Test prompts of varying complexity
@@ -64,12 +81,23 @@ def main():
         "Write a detailed analysis of the economic impacts of artificial intelligence on society.",  # Complex
     ]
     
-    results = {}
+    # Create results directory if it doesn't exist
+    results_dir = Path('benchmark_results')
+    results_dir.mkdir(exist_ok=True)
+    
+    # Get system information
+    system_info = get_system_info()
+    
+    results = {
+        "system_info": system_info,
+        "model": args.model,
+        "prompts": {}
+    }
     
     for i, prompt in enumerate(prompts):
         print(f"\nRunning benchmark with prompt {i+1}")
         stats = run_benchmark(prompt, args.runs)
-        results[f"prompt_{i+1}"] = {
+        results["prompts"][f"prompt_{i+1}"] = {
             "prompt": prompt,
             "stats": stats
         }
@@ -80,8 +108,10 @@ def main():
     
     # Save to file if specified
     if args.output:
-        with open(args.output, 'w') as f:
-            json.dumps(results, f, indent=2)
+        output_path = results_dir / args.output
+        with open(output_path, 'w') as f:
+            json.dump(results, f, indent=2)
+        print(f"\nResults saved to: {output_path}")
 
 if __name__ == "__main__":
     main()
